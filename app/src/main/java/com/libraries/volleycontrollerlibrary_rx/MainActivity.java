@@ -3,6 +3,7 @@ package com.libraries.volleycontrollerlibrary_rx;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -12,9 +13,31 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.android.volley.VolleyError;
+import com.libraries.inlacou.volleycontroller.CustomResponse;
+import com.libraries.inlacou.volleycontroller.InternetCall;
+import com.libraries.inlacou.volleycontroller.VolleyController;
+import com.libraries.volleycontroller_rx.ObservableCallback;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+
+import rx.Observable;
+import rx.Observer;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
 
 public class MainActivity extends AppCompatActivity
 		implements NavigationView.OnNavigationItemSelectedListener {
+
+	private TextView textView;
+	private static final String DEBUG_TAG = MainActivity.class.getName();
+	private Subscription getEachSecond, postEachSecond;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +63,62 @@ public class MainActivity extends AppCompatActivity
 
 		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 		navigationView.setNavigationItemSelectedListener(this);
+
+		textView = (TextView) findViewById(R.id.textView);
+
+		ArrayList<InternetCall> internetCalls = new ArrayList<>();
+		internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 1"));
+		internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 2"));
+		internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 3"));
+		internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 4"));
+
+		Observable.from(internetCalls)
+				.subscribe(new Observer<InternetCall>() {
+					@Override
+					public void onCompleted() {
+						Log.d(DEBUG_TAG+".1"+".subscribe", "--------- onComplete");
+					}
+
+					@Override
+					public void onError(Throwable e) {
+						Log.e(DEBUG_TAG+".1"+".subscribe", e.getMessage());
+						textView.setText(e.getMessage());
+					}
+
+					@Override
+					public void onNext(InternetCall response) {
+						Log.d(DEBUG_TAG+".1"+".subscribe", "Response: " + response.getCode());
+						textView.setText(response.getCode());
+					}
+				});
+
+		Observable.from(internetCalls)
+				.map(new Func1<InternetCall, InternetCall>() {
+					@Override
+					public InternetCall call(InternetCall item) {
+						Log.d(DEBUG_TAG+".2"+".map", item.getCode());
+						item.setCode(item.getCode()+" modified");
+						return item;
+					}
+				})
+				.subscribe(new Observer<InternetCall>() {
+					@Override
+					public void onCompleted() {
+						Log.d(DEBUG_TAG+".2"+".subscribe", "--------- onComplete");
+					}
+
+					@Override
+					public void onError(Throwable e) {
+						Log.e(DEBUG_TAG+".2"+".subscribe", e.getMessage());
+						textView.setText(e.getMessage());
+					}
+
+					@Override
+					public void onNext(InternetCall response) {
+						Log.d(DEBUG_TAG+".2"+".subscribe", "Response: " + response.getCode());
+						textView.setText(response.getCode());
+					}
+				});
 	}
 
 	@Override
@@ -74,24 +153,242 @@ public class MainActivity extends AppCompatActivity
 		return super.onOptionsItemSelected(item);
 	}
 
+	public void doGet(){
+		ObservableCallback.create(new InternetCall()
+				.setUrl("http://playground.byvapps.cm/api/search?offset=0&limit=100")
+				.setMethod(InternetCall.Method.GET)
+				.setCode("code_get_rx"))
+				// default Scheduler is Computation
+				.observeOn(AndroidSchedulers.mainThread())
+				//Example map response
+				.map(new Func1<CustomResponse, String>() {
+					@Override
+					public String call(CustomResponse item) {
+						return item.getData();
+					}
+				})
+				.subscribe(new Observer<String>() {
+					@Override
+					public void onCompleted() {
+						Log.d(DEBUG_TAG, "--------- onComplete");
+					}
+
+					@Override
+					public void onError(Throwable e) {
+						Log.e(DEBUG_TAG, e.getMessage());
+						textView.setText(e.getMessage());
+					}
+
+					@Override
+					public void onNext(String response) {
+						Log.d(DEBUG_TAG, "Response: " + response);
+						textView.setText(response);
+					}
+				});
+	}
+
+	public void doPost(){
+		VolleyController.getInstance().onCall(new InternetCall()
+				.setUrl("http://jsonplaceholder.typicode.com/posts")
+				.setMethod(InternetCall.Method.POST)
+				.putParam("title", "foo")
+				.putParam("body", "bar")
+				.putParam("userId", "5")
+				.putParam("null", null)
+				.putParam("notNull", "something")
+				.setCode("code_create_posts")
+				.addCallback(new VolleyController.IOCallbacks() {
+					@Override
+					public void onResponse(CustomResponse response, String code) {
+						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + response);
+						textView.setText(response.getData());
+					}
+
+					@Override
+					public void onResponseError(VolleyError error, String code) {
+						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + error);
+						textView.setText(VolleyController.getInstance().getMessage(error));
+					}
+				}));
+	}
+
+	public void doPut(){
+		HashMap<String, String> params = new HashMap<>();
+		params.put("id", "1");
+		params.put("title", "foo");
+		params.put("null", null);
+		params.put("notNull", "something");
+		params.put("body", "bar");
+		params.put("userId", "1");
+		VolleyController.getInstance().onCall(new InternetCall()
+				.setUrl("http://jsonplaceholder.typicode.com/posts/1")
+				.setMethod(InternetCall.Method.PUT)
+				.putParams(params)
+				.setCode("code_modify_post")
+				.addCallback(new VolleyController.IOCallbacks() {
+					@Override
+					public void onResponse(CustomResponse response, String code) {
+						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + response);
+						textView.setText(response.getData());
+					}
+
+					@Override
+					public void onResponseError(VolleyError error, String code) {
+						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + error);
+						textView.setText(VolleyController.getInstance().getMessage(error));
+					}
+				})
+		);
+	}
+
+	public void doDelete(){
+		VolleyController.getInstance().onCall(new InternetCall()
+				.setUrl("http://jsonplaceholder.typicode.com/posts/1")
+				.setMethod(InternetCall.Method.DELETE)
+				.setCode("code_delete_post")
+				.addCallback(new VolleyController.IOCallbacks() {
+					@Override
+					public void onResponse(CustomResponse response, String code) {
+						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + response);
+						textView.setText(response.getData());
+					}
+
+					@Override
+					public void onResponseError(VolleyError error, String code) {
+						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + error);
+						textView.setText(VolleyController.getInstance().getMessage(error));
+					}
+				}));
+	}
+
 	@SuppressWarnings("StatementWithEmptyBody")
 	@Override
 	public boolean onNavigationItemSelected(MenuItem item) {
 		// Handle navigation view item clicks here.
 		int id = item.getItemId();
 
-		if (id == R.id.nav_camera) {
-			// Handle the camera action
-		} else if (id == R.id.nav_gallery) {
+		if (id == R.id.nav_GET) {
+			doGet();
+		} else if (id == R.id.nav_POST) {
+			doPost();
+		} else if (id == R.id.nav_PUT) {
+			doPut();
+		} else if (id == R.id.nav_DELETE) {
+			doDelete();
+		} else if (id == R.id.nav_get_start) {
+			getEachSecond = Observable.interval(5, TimeUnit.SECONDS)
+					.observeOn(AndroidSchedulers.mainThread())
+					.subscribe(new Observer<Long>() {
+						@Override
+						public void onCompleted() {
+							Log.d(DEBUG_TAG, "--------- onComplete");
+						}
 
-		} else if (id == R.id.nav_slideshow) {
+						@Override
+						public void onError(Throwable e) {
+							Log.e(DEBUG_TAG, e.getMessage());
+							textView.setText(e.getMessage());
+						}
 
-		} else if (id == R.id.nav_manage) {
+						@Override
+						public void onNext(Long response) {
+							Log.d(DEBUG_TAG, "Response: " + response);
+							doGet();
+						}
+					});
+		} else if (id == R.id.nav_get_stop) {
+			if(getEachSecond!=null && !getEachSecond.isUnsubscribed()) getEachSecond.unsubscribe();
+		} else if (id == R.id.nav_post_start) {
+			postEachSecond = Observable.interval(10, TimeUnit.SECONDS)
+					.observeOn(AndroidSchedulers.mainThread())
+					.subscribe(new Observer<Long>() {
+						@Override
+						public void onCompleted() {
+							Log.d(DEBUG_TAG, "--------- onComplete");
+						}
 
-		} else if (id == R.id.nav_share) {
+						@Override
+						public void onError(Throwable e) {
+							Log.e(DEBUG_TAG, e.getMessage());
+							textView.setText(e.getMessage());
+						}
 
-		} else if (id == R.id.nav_send) {
+						@Override
+						public void onNext(Long response) {
+							Log.d(DEBUG_TAG, "Response: " + response);
+							doPost();
+						}
+					});
+		} else if (id == R.id.nav_post_stop) {
+			if(postEachSecond!=null && !postEachSecond.isUnsubscribed()) postEachSecond.unsubscribe();
+		} else if (id == R.id.nav_multiple_calls_at_once){
+			Toast.makeText(this, "WARNING! Flatmap may cause unordered results", Toast.LENGTH_SHORT).show();
+			ArrayList<InternetCall> internetCalls = new ArrayList<>();
+			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 1"));
+			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=1&limit=1").setCode("Code 2"));
+			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 3"));
+			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=2&limit=1").setCode("Code 4"));
+			textView.setText("");
+			Observable.from(internetCalls)
+					.flatMap(new Func1<InternetCall, Observable<CustomResponse>>() {
+						@Override
+						public Observable<CustomResponse> call(InternetCall item) {
+							Log.d(DEBUG_TAG+".flat"+".flatMap", item.getCode());
+							return ObservableCallback.create(item);
+						}
+					})
+					.subscribe(new Observer<CustomResponse>() {
+						@Override
+						public void onCompleted() {
+							Log.e(DEBUG_TAG+".flat"+".subscribe", "--------- onComplete");
+						}
 
+						@Override
+						public void onError(Throwable e) {
+							Log.e(DEBUG_TAG+".flat"+".subscribe", e.getMessage());
+							textView.setText(e.getMessage());
+						}
+
+						@Override
+						public void onNext(CustomResponse response) {
+							Log.d(DEBUG_TAG+".flat"+".subscribe", "Response: " + response.getData());
+							textView.setText(textView.getText() + "\n\n" + response.getData());
+						}
+					});
+		} else if (id == R.id.nav_multiple_calls_at_once_ordered){
+			Toast.makeText(this, "ConcatMap should give ordered and consistent results", Toast.LENGTH_SHORT).show();
+			ArrayList<InternetCall> internetCalls = new ArrayList<>();
+			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 1"));
+			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=1&limit=1").setCode("Code 2"));
+			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 3"));
+			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=2&limit=1").setCode("Code 4"));
+			textView.setText("");
+			Observable.from(internetCalls)
+					.concatMap(new Func1<InternetCall, Observable<CustomResponse>>() {
+						@Override
+						public Observable<CustomResponse> call(InternetCall item) {
+							Log.d(DEBUG_TAG+".concat"+".concatMap", item.getCode());
+							return ObservableCallback.create(item);
+						}
+					})
+					.subscribe(new Observer<CustomResponse>() {
+						@Override
+						public void onCompleted() {
+							Log.e(DEBUG_TAG+".concat"+".subscribe", "--------- onComplete");
+						}
+
+						@Override
+						public void onError(Throwable e) {
+							Log.e(DEBUG_TAG+".concat"+".subscribe", e.getMessage());
+							textView.setText(e.getMessage());
+						}
+
+						@Override
+						public void onNext(CustomResponse response) {
+							Log.d(DEBUG_TAG+".concat"+".subscribe", "Response: " + response.getData());
+							textView.setText(textView.getText() + "\n\n" + response.getData());
+						}
+					});
 		}
 
 		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

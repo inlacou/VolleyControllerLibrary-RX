@@ -5,6 +5,8 @@ import com.libraries.inlacou.volleycontroller.CustomResponse;
 import com.libraries.inlacou.volleycontroller.InternetCall;
 import com.libraries.inlacou.volleycontroller.VolleyController;
 
+import java.util.ArrayList;
+
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.MainThreadSubscription;
@@ -49,5 +51,12 @@ public class ObservableCallback implements Observable.OnSubscribe<CustomResponse
 			throw new NullPointerException();
 		}
 		return Observable.create(new ObservableCallback(internetCall));
+	}
+
+	public static Observable<InternetCall> from(ArrayList<InternetCall> internetCall) {
+		if(internetCall==null){
+			throw new NullPointerException();
+		}
+		return Observable.from(internetCall);
 	}
 }

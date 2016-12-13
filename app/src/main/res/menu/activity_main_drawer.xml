@@ -3,33 +3,59 @@
 
 	<group android:checkableBehavior="single">
 		<item
-			android:id="@+id/nav_camera"
+			android:id="@+id/nav_GET"
 			android:icon="@drawable/ic_menu_camera"
-			android:title="Import"/>
+			android:title="GET"/>
 		<item
-			android:id="@+id/nav_gallery"
+			android:id="@+id/nav_POST"
 			android:icon="@drawable/ic_menu_gallery"
-			android:title="Gallery"/>
+			android:title="POST"/>
 		<item
-			android:id="@+id/nav_slideshow"
+			android:id="@+id/nav_PUT"
 			android:icon="@drawable/ic_menu_slideshow"
-			android:title="Slideshow"/>
+			android:title="PUT"/>
 		<item
-			android:id="@+id/nav_manage"
+			android:id="@+id/nav_DELETE"
 			android:icon="@drawable/ic_menu_manage"
-			android:title="Tools"/>
+			android:title="DELETE"/>
 	</group>
 
-	<item android:title="Communicate">
+	<item android:title="Interval (5s) GET">
 		<menu>
 			<item
-				android:id="@+id/nav_share"
-				android:icon="@drawable/ic_menu_share"
-				android:title="Share"/>
+				android:id="@+id/nav_get_start"
+				android:icon="@drawable/ic_menu_slideshow"
+				android:title="Start"/>
 			<item
-				android:id="@+id/nav_send"
-				android:icon="@drawable/ic_menu_send"
-				android:title="Send"/>
+				android:id="@+id/nav_get_stop"
+				android:icon="@drawable/ic_menu_gallery"
+				android:title="Stop"/>
+		</menu>
+	</item>
+
+	<item android:title="Interval (10s) POST">
+		<menu>
+			<item
+				android:id="@+id/nav_post_start"
+				android:icon="@drawable/ic_menu_slideshow"
+				android:title="Start"/>
+			<item
+				android:id="@+id/nav_post_stop"
+				android:icon="@drawable/ic_menu_gallery"
+				android:title="Stop"/>
+		</menu>
+	</item>
+
+	<item android:title="Others">
+		<menu>
+			<item
+				android:id="@+id/nav_multiple_calls_at_once"
+				android:icon="@drawable/ic_menu_slideshow"
+				android:title="Multiple calls at once"/>
+			<item
+				android:id="@+id/nav_multiple_calls_at_once_ordered"
+				android:icon="@drawable/ic_menu_slideshow"
+				android:title="Multiple calls at once (ord)"/>
 		</menu>
 	</item>
 
