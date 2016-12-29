@@ -358,13 +358,14 @@ public class MainActivity extends AppCompatActivity
 		} else if (id == R.id.nav_multiple_calls_at_once_ordered){
 			Toast.makeText(this, "ConcatMap should give ordered and consistent results", Toast.LENGTH_SHORT).show();
 			ArrayList<InternetCall> internetCalls = new ArrayList<>();
-			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 1"));
-			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=1&limit=1").setCode("Code 2"));
-			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 3"));
-			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=2&limit=1").setCode("Code 4"));
+
+			for (int i=0; i<10; i++) {
+				internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset="+i+"&limit=1").setCode("Code "+i));
+			}
+
 			textView.setText("");
 			Observable.from(internetCalls)
-					.concatMap(new Func1<InternetCall, Observable<CustomResponse>>() {
+					.switchMap(new Func1<InternetCall, Observable<CustomResponse>>() {
 						@Override
 						public Observable<CustomResponse> call(InternetCall item) {
 							Log.d(DEBUG_TAG+".concat"+".concatMap", item.getCode());
