@@ -11,22 +11,22 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.android.MainThreadSubscription;
 
-public class ObservableCallback implements Observable.OnSubscribe<CustomResponse> {
+public class StringObservable implements Observable.OnSubscribe<String> {
 	final InternetCall internetCall;
 
-	ObservableCallback(InternetCall internetCall) {
+	StringObservable(InternetCall internetCall) {
 		this.internetCall = internetCall;
 	}
 
 	@Override
-	public void call(final Subscriber<? super CustomResponse> subscriber) {
+	public void call(final Subscriber<? super String> subscriber) {
 		MainThreadSubscription.verifyMainThread();
 
 		VolleyController.getInstance().onCall(internetCall.addCallback(new VolleyController.IOCallbacks() {
 			@Override
 			public void onResponse(CustomResponse response, String code) {
 				if (!subscriber.isUnsubscribed()) {
-					subscriber.onNext(response);
+					subscriber.onNext(response.getData());
 				}
 			}
 
@@ -46,11 +46,11 @@ public class ObservableCallback implements Observable.OnSubscribe<CustomResponse
 		});
 	}
 
-	public static Observable<CustomResponse> create(InternetCall internetCall) {
+	public static Observable<String> create(InternetCall internetCall) {
 		if(internetCall==null){
 			throw new NullPointerException();
 		}
-		return Observable.create(new ObservableCallback(internetCall));
+		return Observable.create(new StringObservable(internetCall));
 	}
 
 	public static Observable<InternetCall> from(ArrayList<InternetCall> internetCall) {

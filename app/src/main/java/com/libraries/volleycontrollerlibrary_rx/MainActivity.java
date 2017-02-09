@@ -20,7 +20,7 @@ import com.android.volley.VolleyError;
 import com.libraries.inlacou.volleycontroller.CustomResponse;
 import com.libraries.inlacou.volleycontroller.InternetCall;
 import com.libraries.inlacou.volleycontroller.VolleyController;
-import com.libraries.volleycontroller_rx.ObservableCallback;
+import com.libraries.volleycontroller_rx.CustomResponseObservable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity
 	}
 
 	public void doGet(){
-		ObservableCallback.create(new InternetCall()
+		CustomResponseObservable.create(new InternetCall()
 				.setUrl("http://playground.byvapps.cm/api/search?offset=0&limit=100")
 				.setMethod(InternetCall.Method.GET)
 				.setCode("code_get_rx"))
@@ -326,15 +326,15 @@ public class MainActivity extends AppCompatActivity
 			ArrayList<InternetCall> internetCalls = new ArrayList<>();
 			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 1"));
 			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=1&limit=1").setCode("Code 2"));
-			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 3"));
-			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=2&limit=1").setCode("Code 4"));
+			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=2&limit=1").setCode("Code 3"));
+			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=3&limit=1").setCode("Code 4"));
 			textView.setText("");
 			Observable.from(internetCalls)
 					.flatMap(new Func1<InternetCall, Observable<CustomResponse>>() {
 						@Override
 						public Observable<CustomResponse> call(InternetCall item) {
 							Log.d(DEBUG_TAG+".flat"+".flatMap", item.getCode());
-							return ObservableCallback.create(item);
+							return CustomResponseObservable.create(item);
 						}
 					})
 					.subscribe(new Observer<CustomResponse>() {
@@ -357,6 +357,7 @@ public class MainActivity extends AppCompatActivity
 					});
 		} else if (id == R.id.nav_multiple_calls_at_once_ordered){
 			Toast.makeText(this, "ConcatMap should give ordered and consistent results", Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, "But only gives the last one", Toast.LENGTH_LONG).show();
 			ArrayList<InternetCall> internetCalls = new ArrayList<>();
 
 			for (int i=0; i<10; i++) {
@@ -369,7 +370,7 @@ public class MainActivity extends AppCompatActivity
 						@Override
 						public Observable<CustomResponse> call(InternetCall item) {
 							Log.d(DEBUG_TAG+".concat"+".concatMap", item.getCode());
-							return ObservableCallback.create(item);
+							return CustomResponseObservable.create(item);
 						}
 					})
 					.subscribe(new Observer<CustomResponse>() {
