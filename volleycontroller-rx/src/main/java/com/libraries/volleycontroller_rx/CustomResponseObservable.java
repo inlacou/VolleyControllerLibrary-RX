@@ -41,7 +41,7 @@ public class CustomResponseObservable implements Observable.OnSubscribe<CustomRe
 		subscriber.add(new MainThreadSubscription() {
 			@Override
 			protected void onUnsubscribe() {
-				VolleyController.getInstance().cancelRequest(internetCall);
+				VolleyController.getInstance().cancelRequest(internetCall.getCancelTag());
 			}
 		});
 	}

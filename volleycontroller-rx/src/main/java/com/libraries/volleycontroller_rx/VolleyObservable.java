@@ -11,27 +11,31 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.android.MainThreadSubscription;
 
-public class StringObservable implements Observable.OnSubscribe<String> {
+public class VolleyObservable implements Observable.OnSubscribe<CustomResponse> {
 	final InternetCall internetCall;
+	final VolleyController.IOCallbacks callbacks;
 
-	StringObservable(InternetCall internetCall) {
+	VolleyObservable(InternetCall internetCall, VolleyController.IOCallbacks callbacks) {
 		this.internetCall = internetCall;
+		this.callbacks = callbacks;
 	}
 
 	@Override
-	public void call(final Subscriber<? super String> subscriber) {
+	public void call(final Subscriber<? super CustomResponse> subscriber) {
 		MainThreadSubscription.verifyMainThread();
 
 		VolleyController.getInstance().onCall(internetCall.addCallback(new VolleyController.IOCallbacks() {
 			@Override
 			public void onResponse(CustomResponse response, String code) {
+				callbacks.onResponse(response, code);
 				if (!subscriber.isUnsubscribed()) {
-					subscriber.onNext(response.getData());
+					subscriber.onNext(response);
 				}
 			}
 
 			@Override
 			public void onResponseError(VolleyError error, String code) {
+				callbacks.onResponseError(error, code);
 				if (!subscriber.isUnsubscribed()) {
 					subscriber.onError(error);
 				}
@@ -46,11 +50,11 @@ public class StringObservable implements Observable.OnSubscribe<String> {
 		});
 	}
 
-	public static Observable<String> create(InternetCall internetCall) {
+	public static Observable<CustomResponse> create(InternetCall internetCall, VolleyController.IOCallbacks callbacks) {
 		if(internetCall==null){
 			throw new NullPointerException();
 		}
-		return Observable.create(new StringObservable(internetCall));
+		return Observable.create(new VolleyObservable(internetCall, callbacks));
 	}
 
 	public static Observable<InternetCall> from(ArrayList<InternetCall> internetCall) {
