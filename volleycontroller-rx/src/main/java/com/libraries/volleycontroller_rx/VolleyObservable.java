@@ -7,11 +7,12 @@ import com.libraries.inlacou.volleycontroller.VolleyController;
 
 import java.util.ArrayList;
 
-import rx.Observable;
-import rx.Subscriber;
-import rx.android.MainThreadSubscription;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.functions.Cancellable;
 
-public class VolleyObservable implements Observable.OnSubscribe<CustomResponse> {
+public class VolleyObservable implements ObservableOnSubscribe<CustomResponse> {
 	final InternetCall internetCall;
 	final VolleyController.IOCallbacks callbacks;
 
@@ -19,32 +20,27 @@ public class VolleyObservable implements Observable.OnSubscribe<CustomResponse> 
 		this.internetCall = internetCall;
 		this.callbacks = callbacks;
 	}
-
+	
 	@Override
-	public void call(final Subscriber<? super CustomResponse> subscriber) {
-		MainThreadSubscription.verifyMainThread();
-
+	public void subscribe(final ObservableEmitter<CustomResponse> subscriber) throws Exception {
+		///MainThreadSubscription.verifyMainThread();
+		
 		VolleyController.getInstance().onCall(internetCall.addCallback(new VolleyController.IOCallbacks() {
 			@Override
 			public void onResponse(CustomResponse response, String code) {
 				callbacks.onResponse(response, code);
-				if (!subscriber.isUnsubscribed()) {
-					subscriber.onNext(response);
-				}
+				subscriber.onNext(response);
 			}
-
+			
 			@Override
 			public void onResponseError(VolleyError error, String code) {
 				callbacks.onResponseError(error, code);
-				if (!subscriber.isUnsubscribed()) {
-					subscriber.onError(error);
-				}
+				subscriber.onError(error);
 			}
 		}));
-
-		subscriber.add(new MainThreadSubscription() {
+		subscriber.setCancellable(new Cancellable() {
 			@Override
-			protected void onUnsubscribe() {
+			public void cancel() throws Exception {
 				VolleyController.getInstance().cancelRequest(internetCall.getCancelTag());
 			}
 		});
@@ -61,6 +57,6 @@ public class VolleyObservable implements Observable.OnSubscribe<CustomResponse> 
 		if(internetCall==null){
 			throw new NullPointerException();
 		}
-		return Observable.from(internetCall);
+		return Observable.fromIterable(internetCall);
 	}
 }

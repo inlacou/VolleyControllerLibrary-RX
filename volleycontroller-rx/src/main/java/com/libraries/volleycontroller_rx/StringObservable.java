@@ -7,56 +7,53 @@ import com.libraries.inlacou.volleycontroller.VolleyController;
 
 import java.util.ArrayList;
 
-import rx.Observable;
-import rx.Subscriber;
-import rx.android.MainThreadSubscription;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.functions.Cancellable;
 
-public class StringObservable implements Observable.OnSubscribe<String> {
+public class StringObservable implements ObservableOnSubscribe<String> {
 	final InternetCall internetCall;
-
+	
 	StringObservable(InternetCall internetCall) {
 		this.internetCall = internetCall;
 	}
-
+	
 	@Override
-	public void call(final Subscriber<? super String> subscriber) {
-		MainThreadSubscription.verifyMainThread();
-
+	public void subscribe(final ObservableEmitter<String> subscriber) throws Exception {
+		///MainThreadSubscription.verifyMainThread();
+		
 		VolleyController.getInstance().onCall(internetCall.addCallback(new VolleyController.IOCallbacks() {
 			@Override
 			public void onResponse(CustomResponse response, String code) {
-				if (!subscriber.isUnsubscribed()) {
-					subscriber.onNext(response.getData());
-				}
+				subscriber.onNext(response.getData());
 			}
-
+			
 			@Override
 			public void onResponseError(VolleyError error, String code) {
-				if (!subscriber.isUnsubscribed()) {
-					subscriber.onError(error);
-				}
+				subscriber.onError(error);
 			}
 		}));
-
-		subscriber.add(new MainThreadSubscription() {
+		
+		subscriber.setCancellable(new Cancellable() {
 			@Override
-			protected void onUnsubscribe() {
+			public void cancel() throws Exception {
 				VolleyController.getInstance().cancelRequest(internetCall.getCancelTag());
 			}
 		});
 	}
-
+	
 	public static Observable<String> create(InternetCall internetCall) {
 		if(internetCall==null){
 			throw new NullPointerException();
 		}
 		return Observable.create(new StringObservable(internetCall));
 	}
-
+	
 	public static Observable<InternetCall> from(ArrayList<InternetCall> internetCall) {
 		if(internetCall==null){
 			throw new NullPointerException();
 		}
-		return Observable.from(internetCall);
+		return Observable.fromIterable(internetCall);
 	}
 }

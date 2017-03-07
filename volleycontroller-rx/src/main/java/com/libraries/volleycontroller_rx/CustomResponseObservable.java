@@ -5,13 +5,17 @@ import com.libraries.inlacou.volleycontroller.CustomResponse;
 import com.libraries.inlacou.volleycontroller.InternetCall;
 import com.libraries.inlacou.volleycontroller.VolleyController;
 
+import org.reactivestreams.Subscriber;
+
 import java.util.ArrayList;
 
-import rx.Observable;
-import rx.Subscriber;
-import rx.android.MainThreadSubscription;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.functions.Cancellable;
 
-public class CustomResponseObservable implements Observable.OnSubscribe<CustomResponse> {
+
+public class CustomResponseObservable implements ObservableOnSubscribe<CustomResponse> {
 	final InternetCall internetCall;
 
 	CustomResponseObservable(InternetCall internetCall) {
@@ -19,28 +23,23 @@ public class CustomResponseObservable implements Observable.OnSubscribe<CustomRe
 	}
 
 	@Override
-	public void call(final Subscriber<? super CustomResponse> subscriber) {
-		MainThreadSubscription.verifyMainThread();
+	public void subscribe(final ObservableEmitter<CustomResponse> subscriber) {
+		///MainThreadSubscription.verifyMainThread();
 
 		VolleyController.getInstance().onCall(internetCall.addCallback(new VolleyController.IOCallbacks() {
 			@Override
 			public void onResponse(CustomResponse response, String code) {
-				if (!subscriber.isUnsubscribed()) {
-					subscriber.onNext(response);
-				}
+				subscriber.onNext(response);
 			}
 
 			@Override
 			public void onResponseError(VolleyError error, String code) {
-				if (!subscriber.isUnsubscribed()) {
-					subscriber.onError(error);
-				}
+				subscriber.onError(error);
 			}
 		}));
-
-		subscriber.add(new MainThreadSubscription() {
+		subscriber.setCancellable(new Cancellable() {
 			@Override
-			protected void onUnsubscribe() {
+			public void cancel() throws Exception {
 				VolleyController.getInstance().cancelRequest(internetCall.getCancelTag());
 			}
 		});
@@ -57,6 +56,6 @@ public class CustomResponseObservable implements Observable.OnSubscribe<CustomRe
 		if(internetCall==null){
 			throw new NullPointerException();
 		}
-		return Observable.from(internetCall);
+		return Observable.fromIterable(internetCall);
 	}
 }

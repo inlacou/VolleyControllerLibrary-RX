@@ -26,18 +26,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
-import rx.Observable;
-import rx.Observer;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Function;
 
 public class MainActivity extends AppCompatActivity
 		implements NavigationView.OnNavigationItemSelectedListener {
 
 	private TextView textView;
 	private static final String DEBUG_TAG = MainActivity.class.getName();
-	private Subscription getEachSecond, postEachSecond;
+	private Disposable getEachSecond, postEachSecond;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -72,10 +74,10 @@ public class MainActivity extends AppCompatActivity
 		internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 3"));
 		internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 4"));
 
-		Observable.from(internetCalls)
+		Observable.fromIterable(internetCalls)
 				.subscribe(new Observer<InternetCall>() {
 					@Override
-					public void onCompleted() {
+					public void onComplete() {
 						Log.d(DEBUG_TAG+".1"+".subscribe", "--------- onComplete");
 					}
 
@@ -84,7 +86,12 @@ public class MainActivity extends AppCompatActivity
 						Log.e(DEBUG_TAG+".1"+".subscribe", e.getMessage());
 						textView.setText(e.getMessage());
 					}
-
+					
+					@Override
+					public void onSubscribe(Disposable d) {
+						
+					}
+					
 					@Override
 					public void onNext(InternetCall response) {
 						Log.d(DEBUG_TAG+".1"+".subscribe", "Response: " + response.getCode());
@@ -92,10 +99,10 @@ public class MainActivity extends AppCompatActivity
 					}
 				});
 
-		Observable.from(internetCalls)
-				.map(new Func1<InternetCall, InternetCall>() {
+		Observable.fromIterable(internetCalls)
+				.map(new Function<InternetCall, InternetCall>() {
 					@Override
-					public InternetCall call(InternetCall item) {
+					public InternetCall apply(@NonNull InternetCall item) throws Exception {
 						Log.d(DEBUG_TAG+".2"+".map", item.getCode());
 						item.setCode(item.getCode()+" modified");
 						return item;
@@ -103,7 +110,7 @@ public class MainActivity extends AppCompatActivity
 				})
 				.subscribe(new Observer<InternetCall>() {
 					@Override
-					public void onCompleted() {
+					public void onComplete() {
 						Log.d(DEBUG_TAG+".2"+".subscribe", "--------- onComplete");
 					}
 
@@ -112,7 +119,12 @@ public class MainActivity extends AppCompatActivity
 						Log.e(DEBUG_TAG+".2"+".subscribe", e.getMessage());
 						textView.setText(e.getMessage());
 					}
-
+					
+					@Override
+					public void onSubscribe(Disposable d) {
+						
+					}
+					
 					@Override
 					public void onNext(InternetCall response) {
 						Log.d(DEBUG_TAG+".2"+".subscribe", "Response: " + response.getCode());
@@ -161,15 +173,15 @@ public class MainActivity extends AppCompatActivity
 				// default Scheduler is Computation
 				.observeOn(AndroidSchedulers.mainThread())
 				//Example map response
-				.map(new Func1<CustomResponse, String>() {
+				.map(new Function<CustomResponse, String>() {
 					@Override
-					public String call(CustomResponse item) {
+					public String apply(CustomResponse item) {
 						return item.getData();
 					}
 				})
 				.subscribe(new Observer<String>() {
 					@Override
-					public void onCompleted() {
+					public void onComplete() {
 						Log.d(DEBUG_TAG, "--------- onComplete");
 					}
 
@@ -178,7 +190,12 @@ public class MainActivity extends AppCompatActivity
 						Log.e(DEBUG_TAG, e.getMessage());
 						textView.setText(e.getMessage());
 					}
-
+					
+					@Override
+					public void onSubscribe(Disposable d) {
+						
+					}
+					
 					@Override
 					public void onNext(String response) {
 						Log.d(DEBUG_TAG, "Response: " + response);
@@ -276,11 +293,11 @@ public class MainActivity extends AppCompatActivity
 		} else if (id == R.id.nav_DELETE) {
 			doDelete();
 		} else if (id == R.id.nav_get_start) {
-			getEachSecond = Observable.interval(5, TimeUnit.SECONDS)
+			Observable.interval(5, TimeUnit.SECONDS)
 					.observeOn(AndroidSchedulers.mainThread())
 					.subscribe(new Observer<Long>() {
 						@Override
-						public void onCompleted() {
+						public void onComplete() {
 							Log.d(DEBUG_TAG, "--------- onComplete");
 						}
 
@@ -289,7 +306,12 @@ public class MainActivity extends AppCompatActivity
 							Log.e(DEBUG_TAG, e.getMessage());
 							textView.setText(e.getMessage());
 						}
-
+						
+						@Override
+						public void onSubscribe(Disposable d) {
+							getEachSecond = d;
+						}
+						
 						@Override
 						public void onNext(Long response) {
 							Log.d(DEBUG_TAG, "Response: " + response);
@@ -297,13 +319,13 @@ public class MainActivity extends AppCompatActivity
 						}
 					});
 		} else if (id == R.id.nav_get_stop) {
-			if(getEachSecond!=null && !getEachSecond.isUnsubscribed()) getEachSecond.unsubscribe();
+			if(getEachSecond!=null && !getEachSecond.isDisposed()) getEachSecond.dispose();
 		} else if (id == R.id.nav_post_start) {
-			postEachSecond = Observable.interval(10, TimeUnit.SECONDS)
+			Observable.interval(10, TimeUnit.SECONDS)
 					.observeOn(AndroidSchedulers.mainThread())
 					.subscribe(new Observer<Long>() {
 						@Override
-						public void onCompleted() {
+						public void onComplete() {
 							Log.d(DEBUG_TAG, "--------- onComplete");
 						}
 
@@ -312,7 +334,12 @@ public class MainActivity extends AppCompatActivity
 							Log.e(DEBUG_TAG, e.getMessage());
 							textView.setText(e.getMessage());
 						}
-
+						
+						@Override
+						public void onSubscribe(Disposable d) {
+							postEachSecond = d;
+						}
+						
 						@Override
 						public void onNext(Long response) {
 							Log.d(DEBUG_TAG, "Response: " + response);
@@ -320,7 +347,7 @@ public class MainActivity extends AppCompatActivity
 						}
 					});
 		} else if (id == R.id.nav_post_stop) {
-			if(postEachSecond!=null && !postEachSecond.isUnsubscribed()) postEachSecond.unsubscribe();
+			if(postEachSecond!=null && !postEachSecond.isDisposed()) postEachSecond.dispose();
 		} else if (id == R.id.nav_multiple_calls_at_once){
 			Toast.makeText(this, "WARNING! Flatmap may cause unordered results", Toast.LENGTH_SHORT).show();
 			ArrayList<InternetCall> internetCalls = new ArrayList<>();
@@ -329,17 +356,17 @@ public class MainActivity extends AppCompatActivity
 			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=2&limit=1").setCode("Code 3"));
 			internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=3&limit=1").setCode("Code 4"));
 			textView.setText("");
-			Observable.from(internetCalls)
-					.flatMap(new Func1<InternetCall, Observable<CustomResponse>>() {
+			Observable.fromIterable(internetCalls)
+					.flatMap(new Function<InternetCall, ObservableSource<CustomResponse>>() {
 						@Override
-						public Observable<CustomResponse> call(InternetCall item) {
+						public Observable<CustomResponse> apply(InternetCall item) {
 							Log.d(DEBUG_TAG+".flat"+".flatMap", item.getCode());
 							return CustomResponseObservable.create(item);
 						}
 					})
 					.subscribe(new Observer<CustomResponse>() {
 						@Override
-						public void onCompleted() {
+						public void onComplete() {
 							Log.e(DEBUG_TAG+".flat"+".subscribe", "--------- onComplete");
 						}
 
@@ -348,7 +375,12 @@ public class MainActivity extends AppCompatActivity
 							Log.e(DEBUG_TAG+".flat"+".subscribe", e.getMessage());
 							textView.setText(e.getMessage());
 						}
-
+						
+						@Override
+						public void onSubscribe(Disposable d) {
+							
+						}
+						
 						@Override
 						public void onNext(CustomResponse response) {
 							Log.d(DEBUG_TAG+".flat"+".subscribe", "Response: " + response.getData());
@@ -365,17 +397,17 @@ public class MainActivity extends AppCompatActivity
 			}
 
 			textView.setText("");
-			Observable.from(internetCalls)
-					.switchMap(new Func1<InternetCall, Observable<CustomResponse>>() {
+			Observable.fromIterable(internetCalls)
+					.switchMap(new Function<InternetCall, ObservableSource<CustomResponse>>() {
 						@Override
-						public Observable<CustomResponse> call(InternetCall item) {
+						public Observable<CustomResponse> apply(InternetCall item) {
 							Log.d(DEBUG_TAG+".concat"+".concatMap", item.getCode());
 							return CustomResponseObservable.create(item);
 						}
 					})
 					.subscribe(new Observer<CustomResponse>() {
 						@Override
-						public void onCompleted() {
+						public void onComplete() {
 							Log.e(DEBUG_TAG+".concat"+".subscribe", "--------- onComplete");
 						}
 
@@ -384,7 +416,12 @@ public class MainActivity extends AppCompatActivity
 							Log.e(DEBUG_TAG+".concat"+".subscribe", e.getMessage());
 							textView.setText(e.getMessage());
 						}
-
+						
+						@Override
+						public void onSubscribe(Disposable d) {
+							
+						}
+						
 						@Override
 						public void onNext(CustomResponse response) {
 							Log.d(DEBUG_TAG+".concat"+".subscribe", "Response: " + response.getData());
