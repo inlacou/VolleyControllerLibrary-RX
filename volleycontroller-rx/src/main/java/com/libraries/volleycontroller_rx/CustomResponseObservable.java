@@ -30,6 +30,7 @@ public class CustomResponseObservable implements ObservableOnSubscribe<CustomRes
 			@Override
 			public void onResponse(CustomResponse response, String code) {
 				if(!subscriber.isDisposed())	subscriber.onNext(response);
+				if(!subscriber.isDisposed())	subscriber.onComplete();
 			}
 
 			@Override

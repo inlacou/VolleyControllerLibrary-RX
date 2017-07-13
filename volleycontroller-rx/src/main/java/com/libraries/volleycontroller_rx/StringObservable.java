@@ -26,12 +26,13 @@ public class StringObservable implements ObservableOnSubscribe<String> {
 		VolleyController.getInstance().onCall(internetCall.addCallback(new VolleyController.IOCallbacks() {
 			@Override
 			public void onResponse(CustomResponse response, String code) {
-				subscriber.onNext(response.getData());
+				if(!subscriber.isDisposed())	subscriber.onNext(response.getData());
+				if(!subscriber.isDisposed())	subscriber.onComplete();
 			}
 			
 			@Override
 			public void onResponseError(VolleyError error, String code) {
-				subscriber.onError(error);
+				if(!subscriber.isDisposed())	subscriber.onError(error);
 			}
 		}));
 		

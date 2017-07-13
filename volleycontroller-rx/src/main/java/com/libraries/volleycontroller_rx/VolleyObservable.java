@@ -28,14 +28,15 @@ public class VolleyObservable implements ObservableOnSubscribe<CustomResponse> {
 		VolleyController.getInstance().onCall(internetCall.addCallback(new VolleyController.IOCallbacks() {
 			@Override
 			public void onResponse(CustomResponse response, String code) {
-				callbacks.onResponse(response, code);
-				subscriber.onNext(response);
+				if(!subscriber.isDisposed())	callbacks.onResponse(response, code);
+				if(!subscriber.isDisposed())	subscriber.onNext(response);
+				if(!subscriber.isDisposed())	subscriber.onComplete();
 			}
 			
 			@Override
 			public void onResponseError(VolleyError error, String code) {
-				callbacks.onResponseError(error, code);
-				subscriber.onError(error);
+				if(!subscriber.isDisposed())	callbacks.onResponseError(error, code);
+				if(!subscriber.isDisposed())	subscriber.onError(error);
 			}
 		}));
 		subscriber.setCancellable(new Cancellable() {
