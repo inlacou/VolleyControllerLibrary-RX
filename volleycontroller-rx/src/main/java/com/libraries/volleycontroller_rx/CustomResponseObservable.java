@@ -29,12 +29,12 @@ public class CustomResponseObservable implements ObservableOnSubscribe<CustomRes
 		VolleyController.getInstance().onCall(internetCall.addCallback(new VolleyController.IOCallbacks() {
 			@Override
 			public void onResponse(CustomResponse response, String code) {
-				subscriber.onNext(response);
+				if(!subscriber.isDisposed())	subscriber.onNext(response);
 			}
 
 			@Override
 			public void onResponseError(VolleyError error, String code) {
-				subscriber.onError(error);
+				if(!subscriber.isDisposed())    subscriber.onError(error);
 			}
 		}));
 		subscriber.setCancellable(new Cancellable() {
