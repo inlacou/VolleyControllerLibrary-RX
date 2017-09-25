@@ -5,7 +5,9 @@
       <root url="file://$USER_HOME$/.android/build-cache/7e68655db192583decb26d93dc2e7d5a609f0fc4/output/res" />
       <root url="jar://$USER_HOME$/.android/build-cache/7e68655db192583decb26d93dc2e7d5a609f0fc4/output/jars/libs/internal_impl-25.0.1.jar!/" />
     </CLASSES>
-    <JAVADOC />
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/Android/Sdk/extras/android/m2repository/com/android/support/support-fragment/25.0.1/support-fragment-25.0.1-javadoc.jar!/" />
+    </JAVADOC>
     <SOURCES>
       <root url="jar://$USER_HOME$/Android/Sdk/extras/android/m2repository/com/android/support/support-fragment/25.0.1/support-fragment-25.0.1-sources.jar!/" />
     </SOURCES>

@@ -4,7 +4,9 @@
       <root url="file://$USER_HOME$/.android/build-cache/2d7140139e154294f5b1e2eca5dc221a75c1cbf1/output/res" />
       <root url="jar://$USER_HOME$/.android/build-cache/2d7140139e154294f5b1e2eca5dc221a75c1cbf1/output/jars/classes.jar!/" />
     </CLASSES>
-    <JAVADOC />
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/Android/Sdk/extras/android/m2repository/com/android/support/transition/25.0.1/transition-25.0.1-javadoc.jar!/" />
+    </JAVADOC>
     <SOURCES>
       <root url="jar://$USER_HOME$/Android/Sdk/extras/android/m2repository/com/android/support/transition/25.0.1/transition-25.0.1-sources.jar!/" />
     </SOURCES>

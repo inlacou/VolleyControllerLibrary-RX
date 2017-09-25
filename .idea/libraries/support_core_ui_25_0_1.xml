@@ -5,7 +5,9 @@
       <root url="jar://$USER_HOME$/.android/build-cache/f8ad0633fdc65d2480dff0d76ea65e05e86e2b1f/output/jars/libs/internal_impl-25.0.1.jar!/" />
       <root url="file://$USER_HOME$/.android/build-cache/f8ad0633fdc65d2480dff0d76ea65e05e86e2b1f/output/res" />
     </CLASSES>
-    <JAVADOC />
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/Android/Sdk/extras/android/m2repository/com/android/support/support-core-ui/25.0.1/support-core-ui-25.0.1-javadoc.jar!/" />
+    </JAVADOC>
     <SOURCES>
       <root url="jar://$USER_HOME$/Android/Sdk/extras/android/m2repository/com/android/support/support-core-ui/25.0.1/support-core-ui-25.0.1-sources.jar!/" />
     </SOURCES>
