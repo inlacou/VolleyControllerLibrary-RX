@@ -20,7 +20,7 @@ import com.android.volley.VolleyError;
 import com.libraries.inlacou.volleycontroller.CustomResponse;
 import com.libraries.inlacou.volleycontroller.InternetCall;
 import com.libraries.inlacou.volleycontroller.VolleyController;
-import com.libraries.volleycontroller_rx.CustomResponseObservable;
+import com.libraries.volleycontroller_rx.CustomResponseObs;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +33,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Function;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function2;
 
 public class MainActivity extends AppCompatActivity
 		implements NavigationView.OnNavigationItemSelectedListener {
@@ -45,10 +47,10 @@ public class MainActivity extends AppCompatActivity
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+		Toolbar toolbar = findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
 
-		FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+		FloatingActionButton fab = findViewById(R.id.fab);
 		fab.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
@@ -57,16 +59,16 @@ public class MainActivity extends AppCompatActivity
 			}
 		});
 
-		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+		DrawerLayout drawer = findViewById(R.id.drawer_layout);
 		ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
 				this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
 		drawer.setDrawerListener(toggle);
 		toggle.syncState();
 
-		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+		NavigationView navigationView = findViewById(R.id.nav_view);
 		navigationView.setNavigationItemSelectedListener(this);
 
-		textView = (TextView) findViewById(R.id.textView);
+		textView = findViewById(R.id.textView);
 
 		ArrayList<InternetCall> internetCalls = new ArrayList<>();
 		internetCalls.add(new InternetCall().setUrl("http://playground.byvapps.com/api/search?offset=0&limit=1").setCode("Code 1"));
@@ -102,7 +104,7 @@ public class MainActivity extends AppCompatActivity
 		Observable.fromIterable(internetCalls)
 				.map(new Function<InternetCall, InternetCall>() {
 					@Override
-					public InternetCall apply(@NonNull InternetCall item) throws Exception {
+					public InternetCall apply(@NonNull InternetCall item) {
 						Log.d(DEBUG_TAG+".2"+".map", item.getCode());
 						item.setCode(item.getCode()+" modified");
 						return item;
@@ -166,7 +168,7 @@ public class MainActivity extends AppCompatActivity
 	}
 
 	public void doGet(){
-		CustomResponseObservable.create(new InternetCall()
+		CustomResponseObs.Companion.create(new InternetCall()
 				.setUrl("http://playground.byvapps.cm/api/search?offset=0&limit=100")
 				.setMethod(InternetCall.Method.GET)
 				.setCode("code_get_rx"))
@@ -205,7 +207,7 @@ public class MainActivity extends AppCompatActivity
 	}
 
 	public void doPost(){
-		VolleyController.getInstance().onCall(new InternetCall()
+		VolleyController.INSTANCE.onCall(new InternetCall()
 				.setUrl("http://jsonplaceholder.typicode.com/posts")
 				.setMethod(InternetCall.Method.POST)
 				.putParam("title", "foo")
@@ -214,19 +216,23 @@ public class MainActivity extends AppCompatActivity
 				.putParam("null", null)
 				.putParam("notNull", "something")
 				.setCode("code_create_posts")
-				.addCallback(new VolleyController.IOCallbacks() {
+				.addSuccessCallback(new Function2<CustomResponse, String, Unit>() {
 					@Override
-					public void onResponse(CustomResponse response, String code) {
+					public Unit invoke(CustomResponse response, String code) {
 						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + response);
 						textView.setText(response.getData());
+						return null;
 					}
-
+				})
+				.addErrorCallback(new Function2<VolleyError, String, Unit>() {
 					@Override
-					public void onResponseError(VolleyError error, String code) {
+					public Unit invoke(VolleyError error, String code) {
 						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + error);
-						textView.setText(VolleyController.getInstance().getMessage(error));
+						textView.setText(VolleyController.INSTANCE.getMessage(error));
+						return null;
 					}
 				}));
+				
 	}
 
 	public void doPut(){
@@ -237,43 +243,48 @@ public class MainActivity extends AppCompatActivity
 		params.put("notNull", "something");
 		params.put("body", "bar");
 		params.put("userId", "1");
-		VolleyController.getInstance().onCall(new InternetCall()
+		VolleyController.INSTANCE.onCall(new InternetCall()
 				.setUrl("http://jsonplaceholder.typicode.com/posts/1")
 				.setMethod(InternetCall.Method.PUT)
 				.putParams(params)
 				.setCode("code_modify_post")
-				.addCallback(new VolleyController.IOCallbacks() {
+				.addSuccessCallback(new Function2<CustomResponse, String, Unit>() {
 					@Override
-					public void onResponse(CustomResponse response, String code) {
+					public Unit invoke(CustomResponse response, String code) {
 						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + response);
 						textView.setText(response.getData());
-					}
-
-					@Override
-					public void onResponseError(VolleyError error, String code) {
-						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + error);
-						textView.setText(VolleyController.getInstance().getMessage(error));
+						return null;
 					}
 				})
-		);
+				.addErrorCallback(new Function2<VolleyError, String, Unit>() {
+					@Override
+					public Unit invoke(VolleyError error, String code) {
+						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + error);
+						textView.setText(VolleyController.INSTANCE.getMessage(error));
+						return null;
+					}
+				}));
 	}
 
 	public void doDelete(){
-		VolleyController.getInstance().onCall(new InternetCall()
+		VolleyController.INSTANCE.onCall(new InternetCall()
 				.setUrl("http://jsonplaceholder.typicode.com/posts/1")
 				.setMethod(InternetCall.Method.DELETE)
 				.setCode("code_delete_post")
-				.addCallback(new VolleyController.IOCallbacks() {
+				.addSuccessCallback(new Function2<CustomResponse, String, Unit>() {
 					@Override
-					public void onResponse(CustomResponse response, String code) {
+					public Unit invoke(CustomResponse response, String code) {
 						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + response);
 						textView.setText(response.getData());
+						return null;
 					}
-
+				})
+				.addErrorCallback(new Function2<VolleyError, String, Unit>() {
 					@Override
-					public void onResponseError(VolleyError error, String code) {
+					public Unit invoke(VolleyError error, String code) {
 						Log.d(DEBUG_TAG, "Code: " + code + " | CustomResponse: " + error);
-						textView.setText(VolleyController.getInstance().getMessage(error));
+						textView.setText(VolleyController.INSTANCE.getMessage(error));
+						return null;
 					}
 				}));
 	}
@@ -361,7 +372,7 @@ public class MainActivity extends AppCompatActivity
 						@Override
 						public Observable<CustomResponse> apply(InternetCall item) {
 							Log.d(DEBUG_TAG+".flat"+".flatMap", item.getCode());
-							return CustomResponseObservable.create(item);
+							return CustomResponseObs.Companion.create(item);
 						}
 					})
 					.subscribe(new Observer<CustomResponse>() {
@@ -402,7 +413,7 @@ public class MainActivity extends AppCompatActivity
 						@Override
 						public Observable<CustomResponse> apply(InternetCall item) {
 							Log.d(DEBUG_TAG+".concat"+".concatMap", item.getCode());
-							return CustomResponseObservable.create(item);
+							return CustomResponseObs.Companion.create(item);
 						}
 					})
 					.subscribe(new Observer<CustomResponse>() {
